@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chemist Dashboard - VeriScript</title>
+  <link rel="stylesheet" href="/css/main.css">
+  <style>
+    .dashboard-container {
+      min-height: 100vh;
+      background: var(--gray-50);
+    }
+    
+    .top-bar {
+      background: white;
+      padding: 1.5rem 2rem;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    
+    .content-area {
+      padding: 2rem;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+    
+    .scanner-section {
+      background: white;
+      padding: 2rem;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-md);
+      margin-bottom: 2rem;
+      text-align: center;
+    }
+    
+    .scanner-icon {
+      font-size: 4rem;
+      margin-bottom: 1rem;
+    }
+    
+    .verification-form {
+      max-width: 500px;
+      margin: 0 auto;
+    }
+    
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    
+    .stat-card {
+      background: white;
+      padding: 1.5rem;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+    }
+    
+    .prescription-details {
+      background: white;
+      padding: 2rem;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      margin-top: 2rem;
+    }
+    
+    .medicine-list {
+      margin: 1.5rem 0;
+    }
+    
+    .medicine-item {
+      background: var(--gray-50);
+      padding: 1rem;
+      border-radius: var(--radius-md);
+      margin-bottom: 0.5rem;
+    }
+    
+    .verification-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      border-radius: var(--radius-full);
+      font-weight: 600;
+      margin: 1rem 0;
+    }
+    
+    .verification-badge.verified {
+      background: #d1fae5;
+      color: #065f46;
+    }
+    
+    .verification-badge.failed {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+  </style>
+</head>
+<body>
+  <div class="dashboard-container">
+    <!-- Top Bar -->
+    <div class="top-bar">
+      <div>
+        <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem;">
+          <span style="font-size: 2rem;">💊</span>
+          <h2 id="pharmacyName" style="margin: 0;">VeriScript Chemist</h2>
+        </div>
+        <p id="ownerName" style="margin: 0; color: var(--gray-600); font-size: 0.875rem;"></p>
+      </div>
+      <div style="display: flex; gap: 1rem; align-items: center;">
+        <span id="verificationBadge" class="badge badge-warning">Pending Verification</span>
+        <button class="btn btn-outline" onclick="utils.logout()">
+          Logout
+        </button>
+      </div>
+    </div>
+    
+    <!-- Content Area -->
+    <div class="content-area">
+      <!-- Stats Grid -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div style="font-size: 2rem; margin-bottom: 0.5rem;">✅</div>
+          <div style="color: var(--gray-600); font-size: 0.875rem; margin-bottom: 0.5rem;">Total Dispensed</div>
+          <div style="font-size: 2rem; font-weight: 700;" id="totalDispensed">0</div>
+        </div>
+        
+        <div class="stat-card">
+          <div style="font-size: 2rem; margin-bottom: 0.5rem;">📅</div>
+          <div style="color: var(--gray-600); font-size: 0.875rem; margin-bottom: 0.5rem;">Today</div>
+          <div style="font-size: 2rem; font-weight: 700;" id="todayCount">0</div>
+        </div>
+        
+        <div class="stat-card">
+          <div style="font-size: 2rem; margin-bottom: 0.5rem;">📊</div>
+          <div style="color: var(--gray-600); font-size: 0.875rem; margin-bottom: 0.5rem;">This Month</div>
+          <div style="font-size: 2rem; font-weight: 700;" id="monthlyCount">0</div>
+        </div>
+      </div>
+      
+      <!-- Scanner Section -->
+      <div class="scanner-section">
+        <div class="scanner-icon">📷</div>
+        <h3>Verify Prescription</h3>
+        <p style="color: var(--gray-600); margin-bottom: 2rem;">
+          Scan QR code or enter verification details manually
+        </p>
+        
+        <div class="verification-form">
+          <form id="verificationForm">
+            <div class="form-group">
+              <label class="form-label required" for="prescriptionId">Prescription ID</label>
+              <input 
+                type="text" 
+                id="prescriptionId" 
+                class="form-input" 
+                placeholder="Enter prescription ID"
+                required
+              >
+            </div>
+            
+            <div class="form-group">
+              <label class="form-label required" for="verificationCode">Verification Code</label>
+              <input 
+                type="text" 
+                id="verificationCode" 
+                class="form-input" 
+                placeholder="6-digit code"
+                pattern="[0-9]{6}"
+                maxlength="6"
+                required
+              >
+              <div class="form-help">Enter the 6-digit code from patient</div>
+            </div>
+            
+            <button type="submit" class="btn btn-secondary btn-block btn-lg">
+              Verify Prescription
+            </button>
+          </form>
+          
+          <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--gray-200);">
+            <button class="btn btn-outline btn-block" onclick="openQRScanner()">
+              📷 Scan QR Code
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Prescription Details (Hidden by default) -->
+      <div id="prescriptionDetails" class="prescription-details" style="display: none;">
+        <!-- Details will be loaded here -->
+      </div>
+      
+      <!-- Recent Activity -->
+      <div style="background: white; border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); overflow: hidden; margin-top: 2rem;">
+        <div style="padding: 1.5rem; border-bottom: 1px solid var(--gray-200); display: flex; justify-content: space-between; align-items: center;">
+          <h3 style="margin: 0;">Recent Activity</h3>
+          <button class="btn btn-outline btn-sm" onclick="loadRecentActivity()">
+            🔄 Refresh
+          </button>
+        </div>
+        
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Patient</th>
+              <th>Doctor</th>
+              <th>Medicines</th>
+            </tr>
+          </thead>
+          <tbody id="activityTable">
+            <tr>
+              <td colspan="4" style="text-align: center; padding: 2rem; color: var(--gray-500);">
+                Loading activity...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Loading Spinner -->
+  <div id="loader" class="loader">
+    <div class="loader-content">
+      <div class="spinner"></div>
+      <div class="loader-text">Loading...</div>
+    </div>
+  </div>
+  
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-functions-compat.js"></script>
+  
+  <!-- App Scripts -->
+  <script src="/js/config.js"></script>
+  <script src="/js/utils.js"></script>
+  
+  <script src="/chemist/dashboard.js"></script>
+</body>
+</html>
