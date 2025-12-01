@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Register - VeriScript</title>
+
+  <!-- PWA -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#667eea">
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 2rem 1rem;
+    }
+
+    .register-container {
+      background: white;
+      border-radius: 2rem;
+      padding: 2.5rem;
+      width: 100%;
+      max-width: 500px;
+      margin: 0 auto;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+
+    .logo {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .logo h1 {
+      font-size: 2rem;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 0.5rem;
+    }
+
+    .logo p {
+      color: #6b7280;
+      font-size: 0.875rem;
+    }
+
+    .steps {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 2rem;
+    }
+
+    .step {
+      flex: 1;
+      text-align: center;
+      padding: 0.5rem;
+      position: relative;
+    }
+
+    .step::after {
+      content: '';
+      position: absolute;
+      top: 1.25rem;
+      left: 50%;
+      right: -50%;
+      height: 2px;
+      background: #e5e7eb;
+      z-index: -1;
+    }
+
+    .step:last-child::after {
+      display: none;
+    }
+
+    .step-number {
+      width: 2.5rem;
+      height: 2.5rem;
+      border-radius: 50%;
+      background: #e5e7eb;
+      color: #6b7280;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+
+    .step.active .step-number {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+    }
+
+    .step.completed .step-number {
+      background: #10b981;
+      color: white;
+    }
+
+    .step-label {
+      font-size: 0.75rem;
+      color: #6b7280;
+    }
+
+    .form-step {
+      display: none;
+    }
+
+    .form-step.active {
+      display: block;
+    }
+
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 0.5rem;
+      color: #374151;
+      font-weight: 500;
+      font-size: 0.875rem;
+    }
+
+    .form-group input,
+    .form-group select {
+      width: 100%;
+      padding: 0.875rem 1rem;
+      border: 2px solid #e5e7eb;
+      border-radius: 0.75rem;
+      font-size: 1rem;
+      transition: all 0.3s;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    .btn {
+      padding: 1rem;
+      border: none;
+      border-radius: 0.75rem;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+    }
+
+    .btn-secondary {
+      background: white;
+      color: #374151;
+      border: 2px solid #e5e7eb;
+    }
+
+    .btn-secondary:hover {
+      background: #f9fafb;
+    }
+
+    .form-actions {
+      display: flex;
+      gap: 1rem;
+      margin-top: 2rem;
+    }
+
+    .form-actions .btn {
+      flex: 1;
+    }
+
+    .links {
+      text-align: center;
+      margin-top: 1.5rem;
+    }
+
+    .links a {
+      color: #667eea;
+      text-decoration: none;
+      font-size: 0.875rem;
+      font-weight: 500;
+    }
+
+    .links a:hover {
+      text-decoration: underline;
+    }
+
+    .loader {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+    }
+
+    .loader.show {
+      display: flex;
+    }
+
+    .spinner {
+      width: 50px;
+      height: 50px;
+      border: 4px solid rgba(255, 255, 255, 0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    @media (max-width: 480px) {
+      .register-container {
+        padding: 2rem 1.5rem;
+      }
+
+      .form-row {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Loader -->
+  <div class="loader" id="loader">
+    <div class="spinner"></div>
+  </div>
+
+  <!-- Register Container -->
+  <div class="register-container">
+    <!-- Logo -->
+    <div class="logo">
+      <h1>🎤 VeriScript</h1>
+      <p>Join thousands of doctors using AI voice</p>
+    </div>
+
+    <!-- Steps -->
+    <div class="steps">
+      <div class="step active" data-step="1">
+        <div class="step-number">1</div>
+        <div class="step-label">Account</div>
+      </div>
+      <div class="step" data-step="2">
+        <div class="step-number">2</div>
+        <div class="step-label">Profile</div>
+      </div>
+      <div class="step" data-step="3">
+        <div class="step-number">3</div>
+        <div class="step-label">Complete</div>
+      </div>
+    </div>
+
+    <!-- Registration Form -->
+    <form id="registerForm">
+      <!-- Step 1: Account Details -->
+      <div class="form-step active" data-step="1">
+        <div class="form-group">
+          <label for="email">Email Address *</label>
+          <input 
+            type="email" 
+            id="email" 
+            placeholder="doctor@example.com" 
+            required
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="password">Password *</label>
+          <input 
+            type="password" 
+            id="password" 
+            placeholder="At least 6 characters" 
+            required
+            minlength="6"
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="confirmPassword">Confirm Password *</label>
+          <input 
+            type="password" 
+            id="confirmPassword" 
+            placeholder="Re-enter password" 
+            required
+            minlength="6"
+          >
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn btn-primary" onclick="nextStep()">
+            Next
+          </button>
+        </div>
+      </div>
+
+      <!-- Step 2: Profile Details -->
+      <div class="form-step" data-step="2">
+        <div class="form-group">
+          <label for="name">Full Name *</label>
+          <input 
+            type="text" 
+            id="name" 
+            placeholder="Dr. John Doe" 
+            required
+          >
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="phone">Phone Number *</label>
+            <input 
+              type="tel" 
+              id="phone" 
+              placeholder="9876543210" 
+              required
+              pattern="[0-9]{10}"
+            >
+          </div>
+
+          <div class="form-group">
+            <label for="specialization">Specialization *</label>
+            <select id="specialization" required>
+              <option value="">Select</option>
+              <option value="General Physician">General Physician</option>
+              <option value="Cardiologist">Cardiologist</option>
+              <option value="Dermatologist">Dermatologist</option>
+              <option value="Pediatrician">Pediatrician</option>
+              <option value="Orthopedic">Orthopedic</option>
+              <option value="Gynecologist">Gynecologist</option>
+              <option value="Neurologist">Neurologist</option>
+              <option value="Psychiatrist">Psychiatrist</option>
+              <option value="ENT Specialist">ENT Specialist</option>
+              <option value="Ophthalmologist">Ophthalmologist</option>
+              <option value="Dentist">Dentist</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="licenseNumber">Medical License Number *</label>
+          <input 
+            type="text" 
+            id="licenseNumber" 
+            placeholder="MH12345" 
+            required
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="clinic">Clinic/Hospital Name</label>
+          <input 
+            type="text" 
+            id="clinic" 
+            placeholder="City Hospital"
+          >
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="city">City *</label>
+            <input 
+              type="text" 
+              id="city" 
+              placeholder="Mumbai" 
+              required
+            >
+          </div>
+
+          <div class="form-group">
+            <label for="state">State *</label>
+            <input 
+              type="text" 
+              id="state" 
+              placeholder="Maharashtra" 
+              required
+            >
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary" onclick="prevStep()">
+            Back
+          </button>
+          <button type="submit" class="btn btn-primary">
+            Create Account
+          </button>
+        </div>
+      </div>
+
+      <!-- Step 3: Success -->
+      <div class="form-step" data-step="3">
+        <div style="text-align: center; padding: 2rem 0;">
+          <div style="font-size: 4rem; margin-bottom: 1rem;">✅</div>
+          <h2 style="margin-bottom: 1rem; color: #10b981;">Account Created!</h2>
+          <p style="color: #6b7280; margin-bottom: 2rem;">
+            Please check your email to verify your account.
+          </p>
+          <a href="/pages/auth/login.html" class="btn btn-primary" style="display: inline-block; text-decoration: none;">
+            Go to Login
+          </a>
+        </div>
+      </div>
+    </form>
+
+    <!-- Links -->
+    <div class="links">
+      <span style="color: #6b7280;">Already have an account?</span>
+      <a href="/pages/auth/login.html">Sign In</a>
+    </div>
+  </div>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+  <!-- App Scripts -->
+  <script src="/js/config.js"></script>
+  <script src="/js/utils.js"></script>
+  <script src="/js/auth.js"></script>
+
+  <script>
+    let currentStep = 1;
+
+    function showLoader() {
+      document.getElementById('loader').classList.add('show');
+    }
+
+    function hideLoader() {
+      document.getElementById('loader').classList.remove('show');
+    }
+
+    function updateSteps() {
+      document.querySelectorAll('.step').forEach(step => {
+        const stepNum = parseInt(step.dataset.step);
+        step.classList.remove('active', 'completed');
+        
+        if (stepNum === currentStep) {
+          step.classList.add('active');
+        } else if (stepNum < currentStep) {
+          step.classList.add('completed');
+        }
+      });
+
+      document.querySelectorAll('.form-step').forEach(step => {
+        step.classList.remove('active');
+      });
+
+      document.querySelector(`.form-step[data-step="${currentStep}"]`).classList.add('active');
+    }
+
+    function nextStep() {
+      // Validate step 1
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      const confirmPassword = document.getElementById('confirmPassword').value;
+
+      if (!email || !password || !confirmPassword) {
+        alert('Please fill all required fields');
+        return;
+      }
+
+      if (password !== confirmPassword) {
+        alert('Passwords do not match');
+        return;
+      }
+
+      if (password.length < 6) {
+        alert('Password must be at least 6 characters');
+        return;
+      }
+
+      currentStep = 2;
+      updateSteps();
+    }
+
+    function prevStep() {
+      currentStep = 1;
+      updateSteps();
+    }
+
+    // Handle form submit
+    document.getElementById('registerForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const userData = {
+        name: document.getElementById('name').value,
+        phone: document.getElementById('phone').value,
+        role: 'doctor',
+        specialization: document.getElementById('specialization').value,
+        licenseNumber: document.getElementById('licenseNumber').value,
+        clinic: document.getElementById('clinic').value,
+        city: document.getElementById('city').value,
+        state: document.getElementById('state').value
+      };
+
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+
+      showLoader();
+
+      const result = await authManager.register(email, password, userData);
+
+      hideLoader();
+
+      if (result.success) {
+        currentStep = 3;
+        updateSteps();
+      } else {
+        let message = 'Registration failed. Please try again.';
+        
+        if (result.error.code === 'auth/email-already-in-use') {
+          message = 'Email already in use. Please login instead.';
+        } else if (result.error.code === 'auth/weak-password') {
+          message = 'Password is too weak. Use at least 6 characters.';
+        }
+
+        alert(message);
+      }
+    });
+  </script>
+</body>
+</html>
