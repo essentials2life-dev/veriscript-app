@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Analytics - VeriScript</title>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#667eea">
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #f9fafb;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+      padding: 1rem;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    .header-content {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem 1rem;
+    }
+
+    .date-range {
+      background: white;
+      border-radius: 1rem;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .date-range select {
+      padding: 0.75rem 1rem;
+      border: 2px solid #e5e7eb;
+      border-radius: 0.5rem;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .stat-card {
+      background: white;
+      border-radius: 1rem;
+      padding: 1.5rem;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+    }
+
+    .stat-icon {
+      width: 50px;
+      height: 50px;
+      border-radius: 0.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .stat-icon.blue { background: #dbeafe; }
+    .stat-icon.green { background: #d1fae5; }
+    .stat-icon.purple { background: #e9d5ff; }
+    .stat-icon.orange { background: #fed7aa; }
+
+    .stat-value {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #1f2937;
+      margin-bottom: 0.5rem;
+    }
+
+    .stat-label {
+      color: #6b7280;
+      font-size: 0.875rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .stat-change {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      font-size: 0.875rem;
+      font-weight: 600;
+      padding: 0.25rem 0.5rem;
+      border-radius: 0.25rem;
+    }
+
+    .stat-change.positive {
+      color: #10b981;
+      background: #d1fae5;
+    }
+
+    .stat-change.negative {
+      color: #ef4444;
+      background: #fee2e2;
+    }
+
+    .chart-card {
+      background: white;
+      border-radius: 1rem;
+      padding: 2rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+
+    .chart-card h3 {
+      margin-bottom: 1.5rem;
+      color: #1f2937;
+    }
+
+    .chart-container {
+      position: relative;
+      height: 300px;
+    }
+
+    .top-medicines {
+      background: white;
+      border-radius: 1rem;
+      padding: 2rem;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+
+    .medicine-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .medicine-item:last-child {
+      border-bottom: none;
+    }
+
+    .medicine-name {
+      font-weight: 600;
+      color: #1f2937;
+    }
+
+    .medicine-count {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+      padding: 0.25rem 0.75rem;
+      border-radius: 1rem;
+      font-size: 0.875rem;
+      font-weight: 600;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 8px;
+      background: #e5e7eb;
+      border-radius: 4px;
+      overflow: hidden;
+      margin-top: 0.5rem;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      transition: width 0.3s;
+    }
+
+    @media (max-width: 768px) {
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .date-range {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+    <div class="header-content">
+      <h1>📊 Analytics</h1>
+      <button onclick="window.location.href='/pages/doctor/dashboard.html'" 
+              style="background: rgba(255,255,255,0.2); color: white; border: none; padding: 0.5rem 1rem; border-radius: 0.5rem; cursor: pointer;">
+        Back
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <div class="container">
+    <!-- Date Range Selector -->
+    <div class="date-range">
+      <label style="font-weight: 600; color: #374151;">Time Period:</label>
+      <select id="dateRange" onchange="updateAnalytics()">
+        <option value="today">Today</option>
+        <option value="week" selected>This Week</option>
+        <option value="month">This Month</option>
+        <option value="year">This Year</option>
+        <option value="all">All Time</option>
+      </select>
+      <button onclick="exportReport()" style="margin-left: auto; padding: 0.75rem 1.5rem; background: linear-gradient(135deg, #667eea, #764ba2); color: white; border: none; border-radius: 0.5rem; cursor: pointer; font-weight: 600;">
+        📥 Export Report
+      </button>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon blue">📝</div>
+        <div class="stat-value" id="totalPrescriptions">-</div>
+        <div class="stat-label">Total Prescriptions</div>
+        <div class="stat-change positive" id="prescriptionsChange">
+          ↑ 12% vs last period
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon green">👥</div>
+        <div class="stat-value" id="totalPatients">-</div>
+        <div class="stat-label">Total Patients</div>
+        <div class="stat-change positive" id="patientsChange">
+          ↑ 8% vs last period
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon purple">🎤</div>
+        <div class="stat-value" id="voiceUsage">-</div>
+        <div class="stat-label">Voice Prescriptions</div>
+        <div class="stat-change positive" id="voiceChange">
+          ↑ 25% vs last period
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon orange">⏱️</div>
+        <div class="stat-value" id="avgTime">-</div>
+        <div class="stat-label">Avg. Time per Rx</div>
+        <div class="stat-change negative" id="timeChange">
+          ↓ 15% faster
+        </div>
+      </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="chart-card">
+      <h3>Prescriptions Over Time</h3>
+      <div class="chart-container">
+        <canvas id="prescriptionsChart"></canvas>
+      </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 2rem;">
+      <!-- Top Medicines -->
+      <div class="top-medicines">
+        <h3 style="margin-bottom: 1.5rem;">Top Prescribed Medicines</h3>
+        <div id="topMedicines">
+          <div class="medicine-item">
+            <div>
+              <div class="medicine-name">Paracetamol 500mg</div>
+              <div class="progress-bar">
+                <div class="progress-fill" style="width: 85%"></div>
+              </div>
+            </div>
+            <div class="medicine-count">245</div>
+          </div>
+          <div class="medicine-item">
+            <div>
+              <div class="medicine-name">Amoxicillin 250mg</div>
+              <div class="progress-bar">
+                <div class="progress-fill" style="width: 65%"></div>
+              </div>
+            </div>
+            <div class="medicine-count">187</div>
+          </div>
+          <div class="medicine-item">
+            <div>
+              <div class="medicine-name">Metformin 500mg</div>
+              <div class="progress-bar">
+                <div class="progress-fill" style="width: 45%"></div>
+              </div>
+            </div>
+            <div class="medicine-count">132</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Top Diagnoses -->
+      <div class="top-medicines">
+        <h3 style="margin-bottom: 1.5rem;">Top Diagnoses</h3>
+        <div id="topDiagnoses">
+          <div class="medicine-item">
+            <div>
+              <div class="medicine-name">Common Cold</div>
+              <div class="progress-bar">
+                <div class="progress-fill" style="width: 75%"></div>
+              </div>
+            </div>
+            <div class="medicine-count">156</div>
+          </div>
+          <div class="medicine-item">
+            <div>
+              <div class="medicine-name">Type 2 Diabetes</div>
+              <div class="progress-bar">
+                <div class="progress-fill" style="width: 55%"></div>
+              </div>
+            </div>
+            <div class="medicine-count">98</div>
+          </div>
+          <div class="medicine-item">
+            <div>
+              <div class="medicine-name">Hypertension</div>
+              <div class="progress-bar">
+                <div class="progress-fill" style="width: 40%"></div>
+              </div>
+            </div>
+            <div class="medicine-count">76</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+  <!-- App Scripts -->
+  <script src="/js/config.js"></script>
+  <script src="/js/utils.js"></script>
+  <script src="/js/auth.js"></script>
+  <script src="/js/database.js"></script>
+
+  <script>
+    let prescriptionsChart = null;
+
+    // Initialize analytics
+    async function initAnalytics() {
+      if (!authManager.requireAuth()) return;
+
+      const user = authManager.getCurrentUser();
+      await loadAnalytics(user.uid, 'week');
+      createCharts();
+    }
+
+    // Load analytics data
+    async function loadAnalytics(userId, period) {
+      try {
+        const dateRange = getDateRange(period);
+        
+        // Get prescriptions in date range
+        const snapshot = await firebase.firestore()
+          .collection('prescriptions')
+          .where('doctorId', '==', userId)
+          .where('createdAt', '>=', dateRange.start)
+          .where('createdAt', '<=', dateRange.end)
+          .get();
+
+        const prescriptions = [];
+        snapshot.forEach(doc => {
+          prescriptions.push({ id: doc.id, ...doc.data() });
+        });
+
+        // Calculate stats
+        const stats = calculateStats(prescriptions);
+        updateStatsUI(stats);
+
+        // Update charts
+        updateCharts(prescriptions, period);
+
+      } catch (error) {
+        console.error('Analytics error:', error);
+      }
+    }
+
+    // Get date range
+    function getDateRange(period) {
+      const end = new Date();
+      let start = new Date();
+
+      switch(period) {
+        case 'today':
+          start.setHours(0, 0, 0, 0);
+          break;
+        case 'week':
+          start.setDate(start.getDate() - 7);
+          break;
+        case 'month':
+          start.setMonth(start.getMonth() - 1);
+          break;
+        case 'year':
+          start.setFullYear(start.getFullYear() - 1);
+          break;
+        case 'all':
+          start = new Date(0);
+          break;
+      }
+
+      return { start, end };
+    }
+
+    // Calculate statistics
+    function calculateStats(prescriptions) {
+      const uniquePatients = new Set(prescriptions.map(p => p.patientName)).size;
+      const voiceCount = prescriptions.filter(p => p.voiceUsed).length;
+      const avgTime = prescriptions.reduce((sum, p) => sum + (p.creationTime || 30), 0) / prescriptions.length || 30;
+
+      return {
+        totalPrescriptions: prescriptions.length,
+        totalPatients: uniquePatients,
+        voiceUsage: voiceCount,
+        avgTime: Math.round(avgTime)
+      };
+    }
+
+    // Update stats UI
+    function updateStatsUI(stats) {
+      document.getElementById('totalPrescriptions').textContent = stats.totalPrescriptions;
+      document.getElementById('totalPatients').textContent = stats.totalPatients;
+      document.getElementById('voiceUsage').textContent = stats.voiceUsage;
+      document.getElementById('avgTime').textContent = stats.avgTime + 's';
+    }
+
+    // Create charts
+    function createCharts() {
+      const ctx = document.getElementById('prescriptionsChart');
+      
+      prescriptionsChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+          datasets: [{
+            label: 'Prescriptions',
+            data: [12, 19, 15, 25, 22, 18, 24],
+            borderColor: '#667eea',
+            backgroundColor: 'rgba(102, 126, 234, 0.1)',
+            tension: 0.4,
+            fill: true
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: false
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true
+            }
+          }
+        }
+      });
+    }
+
+    // Update charts
+    function updateCharts(prescriptions, period) {
+      // Group by date
+      const grouped = {};
+      prescriptions.forEach(p => {
+        const date = p.createdAt?.toDate().toLocaleDateString();
+        grouped[date] = (grouped[date] || 0) + 1;
+      });
+
+      const labels = Object.keys(grouped);
+      const data = Object.values(grouped);
+
+      if (prescriptionsChart) {
+        prescriptionsChart.data.labels = labels;
+        prescriptionsChart.data.datasets[0].data = data;
+        prescriptionsChart.update();
+      }
+    }
+
+    // Update analytics
+    function updateAnalytics() {
+      const period = document.getElementById('dateRange').value;
+      const user = authManager.getCurrentUser();
+      loadAnalytics(user.uid, period);
+    }
+
+    // Export report
+    function exportReport() {
+      alert('Export functionality coming soon!');
+    }
+
+    // Initialize on load
+    window.addEventListener('DOMContentLoaded', () => {
+      setTimeout(initAnalytics, 500);
+    });
+  </script>
+</body>
+</html>
