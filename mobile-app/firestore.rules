@@ -1,0 +1,114 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+    
+    function isDoctor() {
+      return isSignedIn() && 
+             exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'doctor';
+    }
+    
+    function isChemist() {
+      return isSignedIn() && 
+             exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'chemist';
+    }
+    
+    // Users collection
+    match /users/{userId} {
+      // Anyone can read user profiles (for doctor info on prescriptions)
+      allow read: if isSignedIn();
+      
+      // Users can only create/update their own profile
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId);
+      
+      // Only admins can delete users
+      allow delete: if false;
+    }
+    
+    // Prescriptions collection
+    match /prescriptions/{prescriptionId} {
+      // Anyone can read prescriptions (patients need access via QR code)
+      allow read: if true;
+      
+      // Only doctors can create prescriptions
+      allow create: if isDoctor() && 
+                      request.resource.data.doctorId == request.auth.uid;
+      
+      // Only the doctor who created it can update
+      allow update: if isDoctor() && 
+                      resource.data.doctorId == request.auth.uid;
+      
+      // Only the doctor who created it can delete
+      allow delete: if isDoctor() && 
+                      resource.data.doctorId == request.auth.uid;
+    }
+    
+    // Patients collection
+    match /patients/{patientId} {
+      // Doctors can read their own patients
+      allow read: if isDoctor() && 
+                    resource.data.doctorId == request.auth.uid;
+      
+      // Doctors can create patients
+      allow create: if isDoctor() && 
+                      request.resource.data.doctorId == request.auth.uid;
+      
+      // Doctors can update their own patients
+      allow update: if isDoctor() && 
+                      resource.data.doctorId == request.auth.uid;
+      
+      // Doctors can delete their own patients
+      allow delete: if isDoctor() && 
+                      resource.data.doctorId == request.auth.uid;
+    }
+    
+    // Usage tracking
+    match /usage/{usageId} {
+      // Only authenticated users can create usage records
+      allow create: if isSignedIn();
+      
+      // Users can read their own usage
+      allow read: if isSignedIn() && 
+                    resource.data.userId == request.auth.uid;
+      
+      // No updates or deletes
+      allow update, delete: if false;
+    }
+    
+    // Voice usage tracking
+    match /voiceUsage/{usageId} {
+      // Only authenticated users can create voice usage records
+      allow create: if isSignedIn();
+      
+      // Users can read their own voice usage
+      allow read: if isSignedIn() && 
+                    resource.data.userId == request.auth.uid;
+      
+      // No updates or deletes
+      allow update, delete: if false;
+    }
+    
+    // Push subscriptions
+    match /pushSubscriptions/{userId} {
+      // Users can only manage their own subscriptions
+      allow read, write: if isOwner(userId);
+    }
+    
+    // Analytics (admin only)
+    match /analytics/{document=**} {
+      allow read: if false; // Only via backend
+      allow write: if false; // Only via backend
+    }
+  }
+}
