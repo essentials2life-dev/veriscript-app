@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Registration - VeriScript</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      padding: 2rem;
+      background: #f3f4f6;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background: white;
+      padding: 2rem;
+      border-radius: 1rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    h1 {
+      margin-bottom: 1rem;
+      color: #333;
+    }
+
+    .status {
+      padding: 1rem;
+      border-radius: 0.5rem;
+      margin-bottom: 1rem;
+      font-weight: 600;
+    }
+
+    .status.success {
+      background: #d1fae5;
+      color: #065f46;
+    }
+
+    .status.error {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .status.info {
+      background: #dbeafe;
+      color: #1e40af;
+    }
+
+    .form-group {
+      margin-bottom: 1rem;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+      color: #374151;
+    }
+
+    input {
+      width: 100%;
+      padding: 0.75rem;
+      border: 2px solid #e5e7eb;
+      border-radius: 0.5rem;
+      font-size: 1rem;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+
+    button {
+      width: 100%;
+      padding: 1rem;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+      border: none;
+      border-radius: 0.5rem;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 1rem;
+    }
+
+    button:hover {
+      opacity: 0.9;
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .log {
+      background: #1f2937;
+      color: #10b981;
+      padding: 1rem;
+      border-radius: 0.5rem;
+      font-family: monospace;
+      font-size: 0.875rem;
+      max-height: 300px;
+      overflow-y: auto;
+      margin-top: 1rem;
+    }
+
+    .log-entry {
+      margin-bottom: 0.5rem;
+    }
+
+    .log-entry.error {
+      color: #ef4444;
+    }
+
+    .log-entry.success {
+      color: #10b981;
+    }
+
+    .log-entry.info {
+      color: #60a5fa;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔧 Registration Diagnostic Tool</h1>
+    
+    <div id="statusContainer"></div>
+
+    <div class="form-group">
+      <label>Email:</label>
+      <input type="email" id="email" value="test@example.com" placeholder="test@example.com">
+    </div>
+
+    <div class="form-group">
+      <label>Password:</label>
+      <input type="password" id="password" value="test123456" placeholder="At least 6 characters">
+    </div>
+
+    <div class="form-group">
+      <label>Name:</label>
+      <input type="text" id="name" value="Dr. Test User" placeholder="Dr. Test User">
+    </div>
+
+    <button onclick="testRegistration()" id="testBtn">
+      🧪 Test Registration
+    </button>
+
+    <button onclick="checkFirebase()" style="background: #3b82f6; margin-top: 0.5rem;">
+      🔍 Check Firebase Connection
+    </button>
+
+    <div class="log" id="log">
+      <div class="log-entry info">📋 Diagnostic log will appear here...</div>
+    </div>
+  </div>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+  <!-- Config -->
+  <script src="/js/config.js"></script>
+
+  <script>
+    const logContainer = document.getElementById('log');
+    const statusContainer = document.getElementById('statusContainer');
+
+    function log(message, type = 'info') {
+      const entry = document.createElement('div');
+      entry.className = `log-entry ${type}`;
+      entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+      logContainer.appendChild(entry);
+      logContainer.scrollTop = logContainer.scrollHeight;
+      console.log(message);
+    }
+
+    function showStatus(message, type = 'info') {
+      statusContainer.innerHTML = `<div class="status ${type}">${message}</div>`;
+    }
+
+    async function checkFirebase() {
+      log('🔍 Checking Firebase configuration...', 'info');
+      
+      try {
+        // Check if Firebase is loaded
+        if (typeof firebase === 'undefined') {
+          log('❌ Firebase SDK not loaded!', 'error');
+          showStatus('❌ Firebase SDK not loaded. Check internet connection.', 'error');
+          return;
+        }
+        log('✅ Firebase SDK loaded', 'success');
+
+        // Check if Firebase is initialized
+        try {
+          const app = firebase.app();
+          log('✅ Firebase initialized', 'success');
+          log(`📱 Project ID: ${app.options.projectId}`, 'info');
+        } catch (e) {
+          log('❌ Firebase not initialized: ' + e.message, 'error');
+          showStatus('❌ Firebase not initialized. Check config.js', 'error');
+          return;
+        }
+
+        // Check Auth
+        try {
+          const auth = firebase.auth();
+          log('✅ Firebase Auth available', 'success');
+        } catch (e) {
+          log('❌ Firebase Auth error: ' + e.message, 'error');
+          showStatus('❌ Firebase Auth not available', 'error');
+          return;
+        }
+
+        // Check Firestore
+        try {
+          const db = firebase.firestore();
+          log('✅ Firestore available', 'success');
+        } catch (e) {
+          log('❌ Firestore error: ' + e.message, 'error');
+          showStatus('❌ Firestore not available', 'error');
+          return;
+        }
+
+        // Test network connection
+        try {
+          log('🌐 Testing network connection...', 'info');
+          const response = await fetch('https://www.google.com', { mode: 'no-cors' });
+          log('✅ Network connection OK', 'success');
+        } catch (e) {
+          log('❌ Network error: ' + e.message, 'error');
+          showStatus('❌ No internet connection', 'error');
+          return;
+        }
+
+        showStatus('✅ All checks passed! Firebase is ready.', 'success');
+        log('✅ All checks passed!', 'success');
+
+      } catch (error) {
+        log('❌ Unexpected error: ' + error.message, 'error');
+        showStatus('❌ Error: ' + error.message, 'error');
+      }
+    }
+
+    async function testRegistration() {
+      const btn = document.getElementById('testBtn');
+      btn.disabled = true;
+      btn.textContent = '⏳ Testing...';
+
+      logContainer.innerHTML = '';
+      log('🚀 Starting registration test...', 'info');
+
+      try {
+        // Get form values
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        const name = document.getElementById('name').value;
+
+        log(`📧 Email: ${email}`, 'info');
+        log(`🔑 Password: ${'*'.repeat(password.length)}`, 'info');
+        log(`👤 Name: ${name}`, 'info');
+
+        // Validate
+        if (!email || !password || !name) {
+          log('❌ Please fill all fields', 'error');
+          showStatus('❌ Please fill all fields', 'error');
+          btn.disabled = false;
+          btn.textContent = '🧪 Test Registration';
+          return;
+        }
+
+        if (password.length < 6) {
+          log('❌ Password must be at least 6 characters', 'error');
+          showStatus('❌ Password must be at least 6 characters', 'error');
+          btn.disabled = false;
+          btn.textContent = '🧪 Test Registration';
+          return;
+        }
+
+        // Step 1: Create user
+        log('📝 Step 1: Creating Firebase user...', 'info');
+        const startTime = Date.now();
+        
+        const userCredential = await firebase.auth()
+          .createUserWithEmailAndPassword(email, password);
+        
+        const createTime = Date.now() - startTime;
+        log(`✅ User created in ${createTime}ms`, 'success');
+        log(`👤 User ID: ${userCredential.user.uid}`, 'info');
+
+        // Step 2: Update profile
+        log('📝 Step 2: Updating profile...', 'info');
+        const profileStart = Date.now();
+        
+        await userCredential.user.updateProfile({
+          displayName: name
+        });
+        
+        const profileTime = Date.now() - profileStart;
+        log(`✅ Profile updated in ${profileTime}ms`, 'success');
+
+        // Step 3: Save to Firestore
+        log('📝 Step 3: Saving to Firestore...', 'info');
+        const firestoreStart = Date.now();
+        
+        await firebase.firestore()
+          .collection('users')
+          .doc(userCredential.user.uid)
+          .set({
+            email: email,
+            name: name,
+            role: 'doctor',
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+        
+        const firestoreTime = Date.now() - firestoreStart;
+        log(`✅ Firestore saved in ${firestoreTime}ms`, 'success');
+
+        // Total time
+        const totalTime = Date.now() - startTime;
+        log(`✅ Total registration time: ${totalTime}ms`, 'success');
+
+        showStatus(`✅ Registration successful! Total time: ${totalTime}ms`, 'success');
+
+        // Clean up - delete test user
+        log('🧹 Cleaning up test user...', 'info');
+        await userCredential.user.delete();
+        log('✅ Test user deleted', 'success');
+
+      } catch (error) {
+        log(`❌ Error: ${error.code}`, 'error');
+        log(`❌ Message: ${error.message}`, 'error');
+        
+        let userMessage = 'Registration failed: ';
+        
+        switch (error.code) {
+          case 'auth/email-already-in-use':
+            userMessage += 'Email already registered. Try a different email.';
+            break;
+          case 'auth/invalid-email':
+            userMessage += 'Invalid email address.';
+            break;
+          case 'auth/weak-password':
+            userMessage += 'Password too weak. Use at least 6 characters.';
+            break;
+          case 'auth/network-request-failed':
+            userMessage += 'Network error. Check your internet connection.';
+            break;
+          case 'permission-denied':
+            userMessage += 'Firestore permission denied. Check security rules.';
+            break;
+          default:
+            userMessage += error.message;
+        }
+
+        showStatus(`❌ ${userMessage}`, 'error');
+      }
+
+      btn.disabled = false;
+      btn.textContent = '🧪 Test Registration';
+    }
+
+    // Auto-check on load
+    window.addEventListener('load', () => {
+      log('🔄 Page loaded, running auto-check...', 'info');
+      setTimeout(checkFirebase, 500);
+    });
+  </script>
+</body>
+</html>
