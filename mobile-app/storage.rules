@@ -1,0 +1,66 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+    
+    function isValidImageType() {
+      return request.resource.contentType.matches('image/.*');
+    }
+    
+    function isValidPDFType() {
+      return request.resource.contentType == 'application/pdf';
+    }
+    
+    function isValidFileSize() {
+      // Max 10MB
+      return request.resource.size < 10 * 1024 * 1024;
+    }
+    
+    // Prescription files
+    match /prescriptions/{prescriptionId}/{allPaths=**} {
+      // Anyone can read (for QR code access)
+      allow read: if true;
+      
+      // Only authenticated users can write
+      allow write: if isSignedIn() && 
+                     isValidFileSize() &&
+                     (isValidImageType() || isValidPDFType());
+    }
+    
+    // User profile pictures
+    match /users/{userId}/profile/{fileName} {
+      // Anyone can read profile pictures
+      allow read: if true;
+      
+      // Only the user can upload their profile picture
+      allow write: if isOwner(userId) && 
+                     isValidImageType() && 
+                     isValidFileSize();
+    }
+    
+    // QR codes
+    match /qrcodes/{prescriptionId}/{fileName} {
+      // Anyone can read QR codes
+      allow read: if true;
+      
+      // Only authenticated users can create QR codes
+      allow write: if isSignedIn() && 
+                     isValidImageType() && 
+                     isValidFileSize();
+    }
+    
+    // Temporary uploads
+    match /temp/{userId}/{fileName} {
+      // Only the user can read/write their temp files
+      allow read, write: if isOwner(userId) && isValidFileSize();
+    }
+  }
+}
